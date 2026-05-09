@@ -1,55 +1,86 @@
 import Image from "next/image";
-import type { SlideData, TemplatePreset } from "@/lib/ppt/types";
+import type { ReactNode } from "react";
+import { getSlideLayoutPreset, type ImageLayoutBox, type LayoutBox, type TextLayoutBox } from "@/lib/ppt/layoutPresets";
+import { getPageSizePreset } from "@/lib/ppt/templates";
+import type { PageSizeId, SlideData, TemplatePreset } from "@/lib/ppt/types";
 
 function slideImage(slide: SlideData) {
   return slide.image ?? slide.images?.[0];
 }
 
+function toPercentBox(box: LayoutBox, pageSizeId: PageSizeId) {
+  const pageSize = getPageSizePreset(pageSizeId);
+
+  return {
+    left: `${(box.x / pageSize.width) * 100}%`,
+    top: `${(box.y / pageSize.height) * 100}%`,
+    width: `${(box.w / pageSize.width) * 100}%`,
+    height: `${(box.h / pageSize.height) * 100}%`,
+  };
+}
+
 function ImageFrame({
   slide,
-  className,
-  fit = "cover",
+  box,
+  pageSizeId,
+  preset,
 }: {
   slide: SlideData;
-  className: string;
-  fit?: "cover" | "contain";
+  box: ImageLayoutBox;
+  pageSizeId: PageSizeId;
+  preset: TemplatePreset;
 }) {
   const image = slideImage(slide);
 
-  if (!image) {
-    return (
-      <div className={`grid place-items-center border border-dashed text-sm ${className}`}>
-        等待图片
-      </div>
-    );
-  }
-
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      <Image
-        src={image}
-        alt={slide.title}
-        fill
-        className={fit === "contain" ? "object-contain" : "object-cover"}
-      />
+    <div
+      className="absolute overflow-hidden"
+      style={{
+        ...toPercentBox(box, pageSizeId),
+        background: preset.colors.imageBg,
+      }}
+    >
+      {image ? (
+        <Image
+          src={image}
+          alt={slide.title}
+          fill
+          className={box.fit === "contain" ? "object-contain" : "object-cover"}
+        />
+      ) : (
+        <div className="grid h-full place-items-center border border-dashed text-sm">
+          等待图片
+        </div>
+      )}
     </div>
   );
 }
 
-function Points({ points, color }: { points?: string[]; color: string }) {
-  if (!points?.length) {
-    return null;
-  }
-
+function TextBox({
+  children,
+  box,
+  pageSizeId,
+  color,
+  weight = 600,
+}: {
+  children: ReactNode;
+  box: TextLayoutBox;
+  pageSizeId: PageSizeId;
+  color: string;
+  weight?: number;
+}) {
   return (
-    <ul className="grid gap-2 text-base leading-7" style={{ color }}>
-      {points.map((point) => (
-        <li key={point} className="flex gap-2">
-          <span>•</span>
-          <span>{point}</span>
-        </li>
-      ))}
-    </ul>
+    <div
+      className="absolute overflow-hidden leading-tight"
+      style={{
+        ...toPercentBox(box, pageSizeId),
+        color,
+        fontSize: box.fontSize,
+        fontWeight: weight,
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -76,214 +107,43 @@ function Footer({
   );
 }
 
-function CoverSlide({
-  slide,
-  preset,
-  index,
-  total,
-}: {
-  slide: SlideData;
-  preset: TemplatePreset;
-  index: number;
-  total: number;
-}) {
-  return (
-    <div className="relative grid h-full grid-cols-[0.95fr_1.05fr]" style={{ background: preset.colors.background }}>
-      <div className="flex flex-col justify-between p-12">
-        <div>
-          <p className="text-xs font-semibold uppercase" style={{ color: preset.colors.accent }}>
-            Interior Presentation
-          </p>
-          <h1 className="mt-8 text-5xl font-semibold leading-tight" style={{ color: preset.colors.text }}>
-            {slide.title}
-          </h1>
-          {slide.subtitle ? (
-            <p className="mt-5 text-xl leading-8" style={{ color: preset.colors.muted }}>
-              {slide.subtitle}
-            </p>
-          ) : null}
-        </div>
-        <Points points={slide.points} color={preset.colors.text} />
-      </div>
-      <div className="p-8">
-        <ImageFrame
-          slide={slide}
-          className="h-full w-full"
-          fit="cover"
-        />
-      </div>
-      <Footer index={index} total={total} preset={preset} />
-    </div>
-  );
-}
-
-function PlanSquareSlide({
-  slide,
-  preset,
-  index,
-  total,
-}: {
-  slide: SlideData;
-  preset: TemplatePreset;
-  index: number;
-  total: number;
-}) {
-  return (
-    <div className="relative grid h-full grid-cols-[1fr_0.72fr]" style={{ background: preset.colors.background }}>
-      <div className="grid place-items-center p-10">
-        <div className="aspect-square w-[82%]" style={{ background: preset.colors.imageBg }}>
-          <ImageFrame slide={slide} className="h-full w-full" fit="contain" />
-        </div>
-      </div>
-      <div className="flex flex-col justify-center p-10">
-        <p className="text-xs font-semibold uppercase" style={{ color: preset.colors.accent }}>
-          Floor Plan
-        </p>
-        <h2 className="mt-5 text-4xl font-semibold leading-tight" style={{ color: preset.colors.text }}>
-          {slide.title}
-        </h2>
-        {slide.subtitle ? (
-          <p className="mt-3 text-lg" style={{ color: preset.colors.muted }}>
-            {slide.subtitle}
-          </p>
-        ) : null}
-        <div className="mt-8">
-          <Points points={slide.points} color={preset.colors.text} />
-        </div>
-      </div>
-      <Footer index={index} total={total} preset={preset} />
-    </div>
-  );
-}
-
-function RenderWideSlide({
-  slide,
-  preset,
-  index,
-  total,
-}: {
-  slide: SlideData;
-  preset: TemplatePreset;
-  index: number;
-  total: number;
-}) {
-  return (
-    <div className="relative h-full" style={{ background: preset.colors.background }}>
-      <div className="absolute inset-x-8 top-8 bottom-28" style={{ background: preset.colors.imageBg }}>
-        <ImageFrame slide={slide} className="h-full w-full" fit="cover" />
-      </div>
-      <div className="absolute inset-x-8 bottom-8 grid grid-cols-[1fr_auto] items-end gap-6">
-        <div>
-          <h2 className="text-3xl font-semibold" style={{ color: preset.colors.text }}>
-            {slide.title}
-          </h2>
-          {slide.subtitle ? (
-            <p className="mt-2 text-base" style={{ color: preset.colors.muted }}>
-              {slide.subtitle}
-            </p>
-          ) : null}
-        </div>
-      </div>
-      <Footer index={index} total={total} preset={preset} />
-    </div>
-  );
-}
-
-function ImageTextSlide({
-  slide,
-  preset,
-  index,
-  total,
-}: {
-  slide: SlideData;
-  preset: TemplatePreset;
-  index: number;
-  total: number;
-}) {
-  return (
-    <div className="relative grid h-full grid-cols-[0.95fr_1.05fr]" style={{ background: preset.colors.background }}>
-      <div className="flex flex-col justify-center p-11">
-        <p className="text-xs font-semibold uppercase" style={{ color: preset.colors.accent }}>
-          Materials
-        </p>
-        <h2 className="mt-5 text-4xl font-semibold leading-tight" style={{ color: preset.colors.text }}>
-          {slide.title}
-        </h2>
-        {slide.subtitle ? (
-          <p className="mt-4 text-lg leading-8" style={{ color: preset.colors.muted }}>
-            {slide.subtitle}
-          </p>
-        ) : null}
-        <div className="mt-8">
-          <Points points={slide.points} color={preset.colors.text} />
-        </div>
-      </div>
-      <div className="p-8">
-        <ImageFrame slide={slide} className="h-full w-full" fit="cover" />
-      </div>
-      <Footer index={index} total={total} preset={preset} />
-    </div>
-  );
-}
-
-function SummarySlide({
-  slide,
-  preset,
-  index,
-  total,
-}: {
-  slide: SlideData;
-  preset: TemplatePreset;
-  index: number;
-  total: number;
-}) {
-  return (
-    <div className="relative flex h-full flex-col justify-center p-16" style={{ background: preset.colors.background }}>
-      <p className="text-xs font-semibold uppercase" style={{ color: preset.colors.accent }}>
-        Summary
-      </p>
-      <h2 className="mt-5 max-w-4xl text-5xl font-semibold leading-tight" style={{ color: preset.colors.text }}>
-        {slide.title}
-      </h2>
-      {slide.subtitle ? (
-        <p className="mt-5 max-w-3xl text-xl leading-8" style={{ color: preset.colors.muted }}>
-          {slide.subtitle}
-        </p>
-      ) : null}
-      <div className="mt-10 max-w-3xl">
-        <Points points={slide.points} color={preset.colors.text} />
-      </div>
-      <Footer index={index} total={total} preset={preset} />
-    </div>
-  );
-}
-
 export function TemplatePreview({
   slide,
   preset,
   index,
   total,
+  pageSizeId = "wide16x9",
 }: {
   slide: SlideData;
   preset: TemplatePreset;
   index: number;
   total: number;
+  pageSizeId?: PageSizeId;
 }) {
-  if (slide.layout === "cover") {
-    return <CoverSlide slide={slide} preset={preset} index={index} total={total} />;
-  }
+  const layout = getSlideLayoutPreset(pageSizeId, slide.layout);
 
-  if (slide.layout === "planSquare") {
-    return <PlanSquareSlide slide={slide} preset={preset} index={index} total={total} />;
-  }
+  return (
+    <div className="relative h-full w-full" style={{ background: preset.colors.background }}>
+      {layout.image ? (
+        <ImageFrame slide={slide} box={layout.image} pageSizeId={pageSizeId} preset={preset} />
+      ) : null}
 
-  if (slide.layout === "renderWide") {
-    return <RenderWideSlide slide={slide} preset={preset} index={index} total={total} />;
-  }
+      <TextBox box={layout.title} pageSizeId={pageSizeId} color={preset.colors.text}>
+        {slide.title}
+      </TextBox>
 
-  if (slide.layout === "summary") {
-    return <SummarySlide slide={slide} preset={preset} index={index} total={total} />;
-  }
+      {slide.layout === "cover" && slide.subtitle && layout.subtitle ? (
+        <TextBox
+          box={layout.subtitle}
+          pageSizeId={pageSizeId}
+          color={preset.colors.muted}
+          weight={400}
+        >
+          {slide.subtitle}
+        </TextBox>
+      ) : null}
 
-  return <ImageTextSlide slide={slide} preset={preset} index={index} total={total} />;
+      <Footer index={index} total={total} preset={preset} />
+    </div>
+  );
 }

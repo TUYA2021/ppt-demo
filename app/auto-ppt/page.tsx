@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TemplatePreview } from "@/components/ppt/TemplatePreview";
 import { mockSlides } from "@/lib/ppt/mockData";
 import {
@@ -12,21 +12,37 @@ import {
 } from "@/lib/ppt/templates";
 import type { PageSizeId, TemplateId } from "@/lib/ppt/types";
 
+const monitorPpi27Inch2k = Math.sqrt(2560 ** 2 + 1440 ** 2) / 27;
+
 export default function AutoPptPage() {
   const [slides] = useState(mockSlides);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [templateId, setTemplateId] = useState<TemplateId>("warmMinimal");
   const [pageSizeId, setPageSizeId] = useState<PageSizeId>("wide16x9");
+  const [devicePixelRatio, setDevicePixelRatio] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const [statusText, setStatusText] = useState(
     "当前是纯图片排版 Demo：先把平面图和效果图稳定放进 PPT。",
   );
 
+  useEffect(() => {
+    function updateDevicePixelRatio() {
+      setDevicePixelRatio(window.devicePixelRatio || 1);
+    }
+
+    updateDevicePixelRatio();
+    window.addEventListener("resize", updateDevicePixelRatio);
+
+    return () => window.removeEventListener("resize", updateDevicePixelRatio);
+  }, []);
+
   const currentSlide = slides[currentIndex];
   const selectedPreset = useMemo(() => getTemplatePreset(templateId), [templateId]);
   const selectedPageSize = useMemo(() => getPageSizePreset(pageSizeId), [pageSizeId]);
   const aspectRatio = `${selectedPageSize.width} / ${selectedPageSize.height}`;
-  const previewMaxWidth = pageSizeId === "a3Portrait" ? "max-w-[520px]" : "max-w-5xl";
+  const previewWidthPx = Math.round(
+    (selectedPageSize.width * monitorPpi27Inch2k) / devicePixelRatio,
+  );
 
   async function handleExportPpt() {
     setIsExporting(true);
@@ -182,8 +198,8 @@ export default function AutoPptPage() {
           </div>
         </aside>
 
-        <section className="flex min-w-0 items-center justify-center p-8">
-          <div className={`w-full ${previewMaxWidth}`}>
+        <section className="flex min-w-0 items-center justify-center overflow-auto p-8">
+          <div className="flex-none" style={{ width: previewWidthPx }}>
             <div className="mb-3 flex items-center justify-between text-sm text-[#71717a]">
               <span>
                 当前模板：{selectedPreset.name} / {selectedPageSize.name}
@@ -191,6 +207,9 @@ export default function AutoPptPage() {
               <span>
                 第 {currentIndex + 1} 页 / {slides.length}
               </span>
+            </div>
+            <div className="mb-3 text-xs text-[#71717a]">
+              1:1 实寸预览：按 27 寸 2K 屏幕估算，当前 {Math.round(monitorPpi27Inch2k)} PPI / DPR {devicePixelRatio.toFixed(2)}
             </div>
 
             <div
@@ -202,6 +221,7 @@ export default function AutoPptPage() {
                 preset={selectedPreset}
                 index={currentIndex}
                 total={slides.length}
+                pageSizeId={pageSizeId}
               />
             </div>
           </div>
@@ -227,6 +247,9 @@ export default function AutoPptPage() {
             <div className="text-sm font-medium">{selectedPageSize.name}</div>
             <div className="mt-1 text-xs text-[#71717a]">
               {selectedPageSize.width} × {selectedPageSize.height}
+            </div>
+            <div className="mt-1 text-xs text-[#71717a]">
+              预览宽度 {previewWidthPx}px，按 27 寸 2K 屏幕做实寸换算
             </div>
           </div>
 
