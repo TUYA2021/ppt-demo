@@ -172,12 +172,19 @@ export function PptEditor({ initialSlides }: PptEditorProps) {
 
               <label className="grid gap-2 text-sm font-medium text-[#52525b]">
                 图片路径
-                <input
-                  value={selectedSlide.images?.[0] ?? ""}
+                <textarea
+                  value={(selectedSlide.images ?? (selectedSlide.image ? [selectedSlide.image] : [])).join("\n")}
                   onChange={(event) =>
-                    updateSlide({ images: event.target.value ? [event.target.value] : [] })
+                    updateSlide({
+                      image: undefined,
+                      images: event.target.value
+                        .split("\n")
+                        .map((image) => image.trim())
+                        .filter(Boolean),
+                    })
                   }
-                  className="border border-[#d4d4d8] px-3 py-2 text-sm text-[#18181b] outline-none focus:border-[#0f766e]"
+                  rows={3}
+                  className="resize-none border border-[#d4d4d8] px-3 py-2 text-sm leading-6 text-[#18181b] outline-none focus:border-[#0f766e]"
                 />
               </label>
 

@@ -4,8 +4,10 @@ import { getSlideLayoutPreset, type ImageLayoutBox, type LayoutBox, type TextLay
 import { getPageSizePreset } from "@/lib/ppt/templates";
 import type { PageSizeId, SlideData, TemplatePreset } from "@/lib/ppt/types";
 
-function slideImage(slide: SlideData) {
-  return slide.image ?? slide.images?.[0];
+function slideImages(slide: SlideData) {
+  const images = slide.images ?? [];
+
+  return slide.image ? [slide.image, ...images.filter((image) => image !== slide.image)] : images;
 }
 
 function toPercentBox(box: LayoutBox, pageSizeId: PageSizeId) {
@@ -24,14 +26,14 @@ function ImageFrame({
   box,
   pageSizeId,
   preset,
+  image,
 }: {
   slide: SlideData;
   box: ImageLayoutBox;
   pageSizeId: PageSizeId;
   preset: TemplatePreset;
+  image?: string;
 }) {
-  const image = slideImage(slide);
-
   return (
     <div
       className="absolute overflow-hidden"
@@ -77,6 +79,7 @@ function TextBox({
         color,
         fontSize: box.fontSize,
         fontWeight: weight,
+        textAlign: box.align ?? "left",
       }}
     >
       {children}
@@ -121,12 +124,21 @@ export function TemplatePreview({
   pageSizeId?: PageSizeId;
 }) {
   const layout = getSlideLayoutPreset(pageSizeId, slide.layout);
+  const images = slideImages(slide);
+  const imageSlots = layout.imageSlots ?? (layout.image ? [layout.image] : []);
 
   return (
     <div className="relative h-full w-full" style={{ background: preset.colors.background }}>
-      {layout.image ? (
-        <ImageFrame slide={slide} box={layout.image} pageSizeId={pageSizeId} preset={preset} />
-      ) : null}
+      {imageSlots.map((box, imageIndex) => (
+        <ImageFrame
+          key={`${box.x}-${box.y}-${imageIndex}`}
+          slide={slide}
+          box={box}
+          pageSizeId={pageSizeId}
+          preset={preset}
+          image={images[imageIndex]}
+        />
+      ))}
 
       <TextBox box={layout.title} pageSizeId={pageSizeId} color={preset.colors.text}>
         {slide.title}

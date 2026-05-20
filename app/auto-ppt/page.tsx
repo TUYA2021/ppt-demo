@@ -10,6 +10,7 @@ import {
   providerBlocks,
   templatePresets,
 } from "@/lib/ppt/templates";
+import { getSlidesForPageSize } from "@/lib/ppt/slidesForPageSize";
 import type { PageSizeId, TemplateId } from "@/lib/ppt/types";
 
 const monitorPpi27Inch2k = Math.sqrt(2560 ** 2 + 1440 ** 2) / 27;
@@ -18,7 +19,7 @@ export default function AutoPptPage() {
   const [slides] = useState(mockSlides);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [templateId, setTemplateId] = useState<TemplateId>("warmMinimal");
-  const [pageSizeId, setPageSizeId] = useState<PageSizeId>("wide16x9");
+  const [pageSizeId, setPageSizeId] = useState<PageSizeId>("a3Landscape");
   const [devicePixelRatio, setDevicePixelRatio] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const [statusText, setStatusText] = useState(
@@ -36,9 +37,11 @@ export default function AutoPptPage() {
     return () => window.removeEventListener("resize", updateDevicePixelRatio);
   }, []);
 
-  const currentSlide = slides[currentIndex];
   const selectedPreset = useMemo(() => getTemplatePreset(templateId), [templateId]);
   const selectedPageSize = useMemo(() => getPageSizePreset(pageSizeId), [pageSizeId]);
+  const previewSlides = useMemo(() => getSlidesForPageSize(slides, pageSizeId), [slides, pageSizeId]);
+  const currentPreviewIndex = Math.min(currentIndex, previewSlides.length - 1);
+  const currentSlide = previewSlides[currentPreviewIndex];
   const aspectRatio = `${selectedPageSize.width} / ${selectedPageSize.height}`;
   const previewWidthPx = Math.round(
     (selectedPageSize.width * monitorPpi27Inch2k) / devicePixelRatio,
@@ -159,12 +162,12 @@ export default function AutoPptPage() {
         <aside className="border-r border-[#dedfdc] bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold">页面</h2>
-            <span className="text-xs text-[#71717a]">{slides.length} 页</span>
+            <span className="text-xs text-[#71717a]">{previewSlides.length} 页</span>
           </div>
 
           <div className="grid gap-2">
-            {slides.map((slide, index) => {
-              const selected = index === currentIndex;
+            {previewSlides.map((slide, index) => {
+              const selected = index === currentPreviewIndex;
 
               return (
                 <button
@@ -205,7 +208,7 @@ export default function AutoPptPage() {
                 当前模板：{selectedPreset.name} / {selectedPageSize.name}
               </span>
               <span>
-                第 {currentIndex + 1} 页 / {slides.length}
+                第 {currentPreviewIndex + 1} 页 / {previewSlides.length}
               </span>
             </div>
             <div className="mb-3 text-xs text-[#71717a]">
@@ -219,8 +222,8 @@ export default function AutoPptPage() {
               <TemplatePreview
                 slide={currentSlide}
                 preset={selectedPreset}
-                index={currentIndex}
-                total={slides.length}
+                index={currentPreviewIndex}
+                total={previewSlides.length}
                 pageSizeId={pageSizeId}
               />
             </div>

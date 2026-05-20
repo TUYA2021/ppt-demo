@@ -1,6 +1,7 @@
 import path from "node:path";
 import pptxgen from "pptxgenjs";
 import { getSlideLayoutPreset, type ImageLayoutBox, type TextLayoutBox } from "./layoutPresets";
+import { getSlidesForPageSize } from "./slidesForPageSize";
 import { getPageSizePreset, getTemplatePreset } from "./templates";
 import type { PageSizeId, SlideData, TemplateId, TemplatePreset } from "./types";
 
@@ -8,14 +9,19 @@ function hex(color: string) {
   return color.replace("#", "");
 }
 
-function publicImagePath(slide: SlideData) {
-  const imagePath = slide.image ?? slide.images?.[0];
+function publicImagePath(imagePath?: string) {
 
   if (!imagePath?.startsWith("/")) {
     return undefined;
   }
 
   return path.join(process.cwd(), "public", imagePath);
+}
+
+function slideImages(slide: SlideData) {
+  const images = slide.images ?? [];
+
+  return slide.image ? [slide.image, ...images.filter((image) => image !== slide.image)] : images;
 }
 
 function addFooter(
@@ -61,6 +67,7 @@ function addTextBox(
     fontSize: box.fontSize,
     bold,
     color: hex(color),
+    align: box.align ?? "left",
     margin: 0,
     fit: "shrink",
   });
@@ -68,11 +75,11 @@ function addTextBox(
 
 function addImageBox(
   slide: pptxgen.Slide,
-  item: SlideData,
+  image: string | undefined,
   box: ImageLayoutBox,
   preset: TemplatePreset,
 ) {
-  const imagePath = publicImagePath(item);
+  const imagePath = publicImagePath(image);
 
   slide.addShape("rect", {
     x: box.x,
@@ -104,10 +111,12 @@ function addSlideContent(
   pageSizeId: PageSizeId,
 ) {
   const layout = getSlideLayoutPreset(pageSizeId, item.layout);
+  const images = slideImages(item);
+  const imageSlots = layout.imageSlots ?? (layout.image ? [layout.image] : []);
 
-  if (layout.image) {
-    addImageBox(slide, item, layout.image, preset);
-  }
+  imageSlots.forEach((box, imageIndex) => {
+    addImageBox(slide, images[imageIndex], box, preset);
+  });
 
   addTextBox(slide, item.title, layout.title, preset, preset.colors.text);
 
@@ -123,25 +132,26 @@ export async function exportSlidesToPptx(
 ): Promise<ArrayBuffer> {
   const preset = getTemplatePreset(templateId);
   const pageSize = getPageSizePreset(pageSizeId);
+  const exportSlides = getSlidesForPageSize(slides, pageSizeId);
   const pptx = new pptxgen();
 
   pptx.defineLayout({ name: pageSize.id, width: pageSize.width, height: pageSize.height });
   pptx.layout = pageSize.id;
   pptx.author = "Interior Presentation Builder";
   pptx.subject = "室内方案汇报 PPT";
-  pptx.title = slides[0]?.title ?? "Interior Presentation";
+  pptx.title = exportSlides[0]?.title ?? "Interior Presentation";
   pptx.company = "ppt-demo";
   pptx.theme = {
     headFontFace: preset.font.title,
     bodyFontFace: preset.font.body,
   };
 
-  slides.forEach((item, index) => {
+  exportSlides.forEach((item, index) => {
     const slide = pptx.addSlide();
 
     slide.background = { color: hex(preset.colors.background) };
     addSlideContent(slide, item, preset, pageSizeId);
-    addFooter(slide, index, slides.length, preset, pageSizeId);
+    addFooter(slide, index, exportSlides.length, preset, pageSizeId);
   });
 
   const data = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
