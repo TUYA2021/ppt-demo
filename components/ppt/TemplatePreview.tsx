@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { getSlideLayoutPreset, type ImageLayoutBox, type LayoutBox, type TextLayoutBox } from "@/lib/ppt/layoutPresets";
 import { getPageSizePreset } from "@/lib/ppt/templates";
@@ -21,33 +20,52 @@ function toPercentBox(box: LayoutBox, pageSizeId: PageSizeId) {
   };
 }
 
+function imageBoxes(
+  layout: ReturnType<typeof getSlideLayoutPreset>,
+  imageCount: number,
+) {
+  if (imageCount === 1 && layout.singleImage) {
+    return [layout.singleImage];
+  }
+
+  return layout.imageSlots ?? (layout.image ? [layout.image] : []);
+}
+
+function visibleImageBoxes(
+  layout: ReturnType<typeof getSlideLayoutPreset>,
+  imageCount: number,
+) {
+  const boxes = imageBoxes(layout, imageCount);
+
+  if (imageCount === 0) {
+    return [];
+  }
+
+  return boxes.slice(0, imageCount);
+}
+
 function ImageFrame({
   slide,
   box,
   pageSizeId,
-  preset,
   image,
 }: {
   slide: SlideData;
   box: ImageLayoutBox;
   pageSizeId: PageSizeId;
-  preset: TemplatePreset;
   image?: string;
 }) {
   return (
     <div
       className="absolute overflow-hidden"
-      style={{
-        ...toPercentBox(box, pageSizeId),
-        background: preset.colors.imageBg,
-      }}
+      style={toPercentBox(box, pageSizeId)}
     >
       {image ? (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={image}
           alt={slide.title}
-          fill
-          className={box.fit === "contain" ? "object-contain" : "object-cover"}
+          className={`h-full w-full ${box.fit === "contain" ? "object-contain" : "object-cover"}`}
         />
       ) : (
         <div className="grid h-full place-items-center border border-dashed text-sm">
@@ -125,7 +143,7 @@ export function TemplatePreview({
 }) {
   const layout = getSlideLayoutPreset(pageSizeId, slide.layout);
   const images = slideImages(slide);
-  const imageSlots = layout.imageSlots ?? (layout.image ? [layout.image] : []);
+  const imageSlots = visibleImageBoxes(layout, images.length);
 
   return (
     <div className="relative h-full w-full" style={{ background: preset.colors.background }}>
@@ -135,7 +153,6 @@ export function TemplatePreview({
           slide={slide}
           box={box}
           pageSizeId={pageSizeId}
-          preset={preset}
           image={images[imageIndex]}
         />
       ))}

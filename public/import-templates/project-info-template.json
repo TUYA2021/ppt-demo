@@ -1,0 +1,37 @@
+{
+  "project": {
+    "title": "120㎡现代风三居室设计方案",
+    "concept": "通透、温暖、简洁的现代家庭空间",
+    "intro": "本案围绕三口之家的日常生活展开，通过开放式客餐厅、充足收纳和柔和材质，打造明亮、舒适、便于长期居住的空间。",
+    "coverImage": ""
+  },
+  "images": [
+    {
+      "id": "living-room-cam0",
+      "name": "客厅 cam 0 效果图",
+      "imageUrl": "https://example.com/render/living-room-cam0.jpg",
+      "category": "render",
+      "roomName": "客厅",
+      "cam": 0,
+      "sort": 1
+    },
+    {
+      "id": "living-room-cam1",
+      "name": "客厅 cam 1 效果图",
+      "imageUrl": "https://example.com/render/living-room-cam1.jpg",
+      "category": "render",
+      "roomName": "客厅",
+      "cam": 1,
+      "sort": 2
+    },
+    {
+      "id": "bedroom-cam0",
+      "name": "主卧 cam 0 效果图",
+      "imageUrl": "https://example.com/render/master-bedroom-cam0.jpg",
+      "category": "render",
+      "roomName": "主卧",
+      "cam": 0,
+      "sort": 3
+    }
+  ]
+}

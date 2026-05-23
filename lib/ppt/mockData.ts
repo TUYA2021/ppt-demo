@@ -1,29 +1,13 @@
-import type { SlideData } from "./types";
+import { buildSlidesFromProjectPayload } from "./buildSlides";
+import type { ProjectPptPayload } from "./types";
 
-export const mockSlides: SlideData[] = [
-  {
-    id: "cover",
-    layout: "cover",
+export const mockProjectPayload: ProjectPptPayload = {
+  project: {
     title: "120㎡现代风三居室设计方案",
-    subtitle: "设计概念：通透、温暖、简洁的现代家庭空间",
-    image: "/demo/living-room.jpg",
+    intro: "本案围绕通透、温暖、简洁的生活方式展开，重点优化公共区尺度、收纳与自然采光。",
+    concept: "设计概念：通透、温暖、简洁的现代家庭空间",
   },
-  {
-    id: "plan",
-    layout: "planSquare",
-    title: "平面布置图",
-    image: "/demo/living-room.jpg",
-  },
-  {
-    id: "living-render",
-    layout: "renderWide",
-    title: "客厅效果图",
-    image: "/demo/living-room.jpg",
-  },
-  {
-    id: "bedroom-render",
-    layout: "renderWide",
-    title: "卧室效果图",
-    image: "/demo/living-room.jpg",
-  },
-];
+  images: [],
+};
+
+export const mockSlides = buildSlidesFromProjectPayload(mockProjectPayload);

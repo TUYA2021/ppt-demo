@@ -59,13 +59,6 @@ export const templatePresets: TemplatePreset[] = [
 
 export const pageSizePresets: PageSizePreset[] = [
   {
-    id: "wide16x9",
-    name: "默认 16:9",
-    description: "适合屏幕演示和常规汇报。",
-    width: 13.333,
-    height: 7.5,
-  },
-  {
     id: "a3Landscape",
     name: "A3 横向",
     description: "适合打印横版图册和大幅平面展示。",
@@ -79,6 +72,13 @@ export const pageSizePresets: PageSizePreset[] = [
     width: 11.69,
     height: 16.54,
   },
+  {
+    id: "wide16x9",
+    name: "默认 16:9",
+    description: "适合屏幕演示和常规汇报。",
+    width: 13.333,
+    height: 7.5,
+  },
 ];
 
 export function getTemplatePreset(templateId: TemplateId) {
@@ -90,7 +90,24 @@ export function getPageSizePreset(pageSizeId: PageSizeId) {
 }
 
 export const providerBlocks = [
-  { label: "图片来源", value: "手动上传 / 外部接口返回 URL", status: "当前用假图" },
-  { label: "平面图比例", value: "正方形图片，居中展示", status: "已支持" },
-  { label: "效果图比例", value: "16:9 图片，大图展示", status: "已支持" },
+  {
+    label: "首页资料",
+    value: "首页标题来自项目名称，副标题优先使用设计概念，其次使用项目介绍。",
+    status: "已接入",
+  },
+  {
+    label: "图片归类",
+    value: "文件名含“封面/平面/效果/材料”等关键词时自动归类，也可上传后手动改类型。",
+    status: "已接入",
+  },
+  {
+    label: "效果图排版",
+    value: "16:9 与 A3 横向每页一张大图；A3 竖向连续效果图自动合并为每页两张。",
+    status: "已接入",
+  },
+  {
+    label: "后端接口",
+    value: "后端只需返回 project 和 images，导出接口会自动把素材转换成 PPT 页面。",
+    status: "建议规范",
+  },
 ];

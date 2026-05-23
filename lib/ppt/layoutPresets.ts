@@ -21,6 +21,7 @@ export type SlideLayoutPreset = {
   title: TextLayoutBox;
   subtitle?: TextLayoutBox;
   image?: ImageLayoutBox;
+  singleImage?: ImageLayoutBox;
   imageSlots?: ImageLayoutBox[];
 };
 
@@ -37,15 +38,15 @@ const wide16x9Layouts: PageLayoutPreset = {
     title: { x: 0.72, y: 6.22, w: 11.9, h: 0.42, fontSize: 20, align: "center" },
   },
   renderWide: {
-    image: { x: 0.72, y: 0.65, w: 11.9, h: 5.35, fit: "cover" },
+    image: { x: 0.72, y: 0.65, w: 11.9, h: 5.35, fit: "contain" },
     title: { x: 0.72, y: 6.22, w: 11.9, h: 0.42, fontSize: 20, align: "center" },
   },
   imageText: {
-    title: { x: 0.72, y: 1.0, w: 5.3, h: 0.72, fontSize: 25 },
-    image: { x: 6.85, y: 0.78, w: 5.75, h: 5.75, fit: "cover" },
+    title: { x: 0.72, y: 6.22, w: 11.9, h: 0.42, fontSize: 20, align: "center" },
+    image: { x: 6.85, y: 0.78, w: 5.75, h: 5.75, fit: "contain" },
   },
   summary: {
-    title: { x: 0.95, y: 1.55, w: 9.7, h: 0.95, fontSize: 32 },
+    title: { x: 0.72, y: 6.08, w: 11.9, h: 0.55, fontSize: 24, align: "center" },
   },
 };
 
@@ -57,21 +58,22 @@ const a3PortraitLayouts: PageLayoutPreset = {
   },
   planSquare: {
     image: { x: 0.75, y: 3.0, w: 10.19, h: 7.2, fit: "contain" },
-    title: { x: 0.75, y: 10.95, w: 10.19, h: 0.65, fontSize: 24, align: "center" },
+    title: { x: 0.75, y: 14.25, w: 10.19, h: 0.65, fontSize: 24, align: "center" },
   },
   renderWide: {
-    title: { x: 0.75, y: 0.78, w: 10.19, h: 0.65, fontSize: 24, align: "center" },
+    title: { x: 0.75, y: 14.25, w: 10.19, h: 0.65, fontSize: 24, align: "center" },
+    singleImage: { x: 0.75, y: 1.35, w: 10.19, h: 12.45, fit: "contain" },
     imageSlots: [
-      { x: 0.75, y: 1.75, w: 10.19, h: 5.73, fit: "cover" },
-      { x: 0.75, y: 8.05, w: 10.19, h: 5.73, fit: "cover" },
+      { x: 0.75, y: 1.75, w: 10.19, h: 5.73, fit: "contain" },
+      { x: 0.75, y: 8.05, w: 10.19, h: 5.73, fit: "contain" },
     ],
   },
   imageText: {
-    title: { x: 0.8, y: 1.35, w: 10.09, h: 1.0, fontSize: 26 },
-    image: { x: 0.8, y: 5.15, w: 10.09, h: 7.57, fit: "cover" },
+    title: { x: 0.8, y: 14.25, w: 10.09, h: 0.65, fontSize: 24, align: "center" },
+    image: { x: 0.8, y: 5.15, w: 10.09, h: 7.57, fit: "contain" },
   },
   summary: {
-    title: { x: 0.95, y: 4.35, w: 9.79, h: 1.35, fontSize: 28 },
+    title: { x: 0.8, y: 14.15, w: 10.09, h: 0.8, fontSize: 26, align: "center" },
   },
 };
 
@@ -97,6 +99,7 @@ function scalePageLayout(layouts: PageLayoutPreset, pageSizeId: PageSizeId): Pag
         title: scaleTextBox(preset.title, sx, sy),
         subtitle: preset.subtitle ? scaleTextBox(preset.subtitle, sx, sy) : undefined,
         image: preset.image ? scaleImageBox(preset.image, sx, sy) : undefined,
+        singleImage: preset.singleImage ? scaleImageBox(preset.singleImage, sx, sy) : undefined,
         imageSlots: preset.imageSlots?.map((box) => scaleImageBox(box, sx, sy)),
       },
     ]),

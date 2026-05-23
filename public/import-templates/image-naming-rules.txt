@@ -1,0 +1,53 @@
+图片资产对接规则
+
+一、系统 URL 图片，优先使用结构化 JSON，不依赖文件名
+
+系统生成图片时，建议后端直接给 PPT 工具下面这些字段：
+
+{
+  "imageUrl": "https://example.com/render/living-room-cam0.jpg",
+  "category": "render",
+  "roomName": "客厅",
+  "cam": 0,
+  "sort": 1
+}
+
+字段说明：
+1. imageUrl：系统图片 URL。也兼容字段名 url、src。
+2. category：图片类型。推荐值：cover、plan、render、material、other。
+3. roomName：房间名。建议直接使用户型识别 JSON 里的 Rooms[].RoomName。
+   如果有同类房间，沿用系统命名，例如：客厅、客厅二、卧室、卧室二。
+4. cam：相机编号。每个房间建议使用 cam 0、cam 1、cam 2、cam 3。
+5. sort：排序。数值越小越靠前。
+
+排版规则：
+1. render 会按 roomName 分组。
+2. 同一个 roomName 的效果图页面会连续排列。
+3. A3 竖向模板中，同一个 roomName 的效果图可两张合并到一页。
+4. 不同 roomName 不会合并到同一页。
+5. 同一房间效果图建议按 cam 0、cam 1、cam 2、cam 3 排序。
+
+二、用户手动上传图片，使用文件名兜底识别
+
+推荐文件名格式：
+序号-房间名-cam编号-图片类型-补充说明.扩展名
+
+示例：
+01-封面-客厅效果图.jpg
+02-平面-彩色平面布置图.png
+03-客厅-cam0-效果图.jpg
+04-客厅-cam1-效果图.jpg
+05-客厅二-cam0-效果图.jpg
+06-主卧-cam0-效果图.jpg
+07-主卧-cam1-效果图.jpg
+08-材料-客餐厅材料板.jpg
+
+文件名识别规则：
+1. 封面图：包含 封面、首页、cover。
+2. 平面图：包含 平面、户型、布局、plan、layout、floor。
+3. 效果图：包含 效果、渲染、render，或包含房间名。
+4. 材料图：包含 材料、材质、物料、material、finish。
+5. cam 编号：支持 cam0、cam 0、camera0、视角0、机位0。
+
+建议：
+系统图片走 JSON 字段；用户上传图片走文件名规则。不要让系统图片依赖文件名解析。

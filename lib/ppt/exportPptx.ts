@@ -18,10 +18,59 @@ function publicImagePath(imagePath?: string) {
   return path.join(process.cwd(), "public", imagePath);
 }
 
+async function imageData(image?: string) {
+  if (!image) {
+    return undefined;
+  }
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    const response = await fetch(image);
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const contentType = response.headers.get("content-type") ?? "image/jpeg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    return {
+      data: `data:${contentType};base64,${buffer.toString("base64")}`,
+    };
+  }
+
+  const imagePath = publicImagePath(image);
+
+  return imagePath ? { path: imagePath } : undefined;
+}
+
 function slideImages(slide: SlideData) {
   const images = slide.images ?? [];
 
   return slide.image ? [slide.image, ...images.filter((image) => image !== slide.image)] : images;
+}
+
+function imageBoxes(
+  layout: ReturnType<typeof getSlideLayoutPreset>,
+  imageCount: number,
+) {
+  if (imageCount === 1 && layout.singleImage) {
+    return [layout.singleImage];
+  }
+
+  return layout.imageSlots ?? (layout.image ? [layout.image] : []);
+}
+
+function visibleImageBoxes(
+  layout: ReturnType<typeof getSlideLayoutPreset>,
+  imageCount: number,
+) {
+  const boxes = imageBoxes(layout, imageCount);
+
+  if (imageCount === 0) {
+    return [];
+  }
+
+  return boxes.slice(0, imageCount);
 }
 
 function addFooter(
@@ -73,29 +122,19 @@ function addTextBox(
   });
 }
 
-function addImageBox(
+async function addImageBox(
   slide: pptxgen.Slide,
   image: string | undefined,
   box: ImageLayoutBox,
-  preset: TemplatePreset,
 ) {
-  const imagePath = publicImagePath(image);
+  const source = await imageData(image);
 
-  slide.addShape("rect", {
-    x: box.x,
-    y: box.y,
-    w: box.w,
-    h: box.h,
-    fill: { color: hex(preset.colors.imageBg) },
-    line: { color: hex(preset.colors.imageBg) },
-  });
-
-  if (!imagePath) {
+  if (!source) {
     return;
   }
 
   slide.addImage({
-    path: imagePath,
+    ...source,
     x: box.x,
     y: box.y,
     w: box.w,
@@ -104,7 +143,7 @@ function addImageBox(
   });
 }
 
-function addSlideContent(
+async function addSlideContent(
   slide: pptxgen.Slide,
   item: SlideData,
   preset: TemplatePreset,
@@ -112,11 +151,11 @@ function addSlideContent(
 ) {
   const layout = getSlideLayoutPreset(pageSizeId, item.layout);
   const images = slideImages(item);
-  const imageSlots = layout.imageSlots ?? (layout.image ? [layout.image] : []);
+  const imageSlots = visibleImageBoxes(layout, images.length);
 
-  imageSlots.forEach((box, imageIndex) => {
-    addImageBox(slide, images[imageIndex], box, preset);
-  });
+  await Promise.all(
+    imageSlots.map((box, imageIndex) => addImageBox(slide, images[imageIndex], box)),
+  );
 
   addTextBox(slide, item.title, layout.title, preset, preset.colors.text);
 
@@ -146,13 +185,13 @@ export async function exportSlidesToPptx(
     bodyFontFace: preset.font.body,
   };
 
-  exportSlides.forEach((item, index) => {
+  for (const [index, item] of exportSlides.entries()) {
     const slide = pptx.addSlide();
 
     slide.background = { color: hex(preset.colors.background) };
-    addSlideContent(slide, item, preset, pageSizeId);
+    await addSlideContent(slide, item, preset, pageSizeId);
     addFooter(slide, index, exportSlides.length, preset, pageSizeId);
-  });
+  }
 
   const data = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
   const arrayBuffer = new ArrayBuffer(data.byteLength);

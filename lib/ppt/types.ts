@@ -4,6 +4,30 @@ export type TemplateId = "warmMinimal" | "galleryWhite" | "darkStudio";
 
 export type PageSizeId = "wide16x9" | "a3Landscape" | "a3Portrait";
 
+export type ProjectImageCategory = "cover" | "plan" | "render" | "material" | "other";
+
+export type ProjectImageAsset = {
+  id: string;
+  name: string;
+  url: string;
+  category: ProjectImageCategory;
+  room?: string;
+  roomName?: string;
+  cam?: number;
+  source?: "system" | "upload" | "manual";
+  sort?: number;
+};
+
+export type ProjectPptPayload = {
+  project: {
+    title: string;
+    intro: string;
+    concept?: string;
+    coverImage?: string;
+  };
+  images: ProjectImageAsset[];
+};
+
 export type SlideData = {
   id: string;
   layout: SlideLayout;
@@ -12,6 +36,7 @@ export type SlideData = {
   image?: string;
   points?: string[];
   note?: string;
+  room?: string;
   // Compatibility for earlier API/template experiments.
   type?: SlideLayout;
   images?: string[];

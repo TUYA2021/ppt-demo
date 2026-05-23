@@ -13,10 +13,20 @@ function mergeRenderSlides(first: SlideData, second: SlideData): SlideData {
   return {
     ...first,
     id: `${first.id}-${second.id}`,
-    title: `${first.title} / ${second.title}`,
+    title: first.room ? `${first.room}效果图` : first.title,
     image: undefined,
     images: [firstImage, secondImage].filter(Boolean),
+    room: first.room,
   };
+}
+
+function canMergeRenderSlides(first: SlideData, second: SlideData) {
+  return (
+    first.layout === "renderWide" &&
+    second.layout === "renderWide" &&
+    Boolean(first.room) &&
+    first.room === second.room
+  );
 }
 
 export function getSlidesForPageSize(slides: SlideData[], pageSizeId: PageSizeId) {
@@ -43,7 +53,7 @@ export function getSlidesForPageSize(slides: SlideData[], pageSizeId: PageSizeId
 
     const nextSlide = slides[index + 1];
 
-    if (nextSlide?.layout === "renderWide") {
+    if (nextSlide && canMergeRenderSlides(slide, nextSlide)) {
       mergedSlides.push(mergeRenderSlides(slide, nextSlide));
       index += 1;
       continue;

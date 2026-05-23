@@ -1,0 +1,21 @@
+{
+  "project": {
+    "title": "必填，首页主标题",
+    "concept": "选填，首页副标题优先使用这个字段",
+    "intro": "必填，项目介绍；当 concept 为空时，也会作为首页副标题",
+    "coverImage": "选填，封面图 URL；为空时系统会使用上传图片中的封面图或第一张效果图"
+  },
+  "images": [
+    {
+      "id": "选填，图片唯一 ID",
+      "name": "选填，展示名称",
+      "url": "选填，本地 public 路径，例如 /uploads/ppt/a.jpg",
+      "imageUrl": "选填，系统图片 URL；url 和 imageUrl 二选一即可",
+      "category": "必填建议值：cover / plan / render / material / other",
+      "roomName": "系统房间名，建议直接使用 Rooms[].RoomName，例如 客厅、客厅二、主卧",
+      "room": "兼容字段，等同 roomName",
+      "cam": "系统相机编号，建议 0 / 1 / 2 / 3",
+      "sort": "选填，排序数字"
+    }
+  ]
+}
